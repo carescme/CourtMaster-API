@@ -23,5 +23,5 @@ public class Pista {
     private TipoPista tipo;
 
     @Column(nullable = false)
-    private boolean activa;
+    private Boolean activa;
 }

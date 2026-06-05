@@ -36,5 +36,5 @@ public class Usuario {
     private BigDecimal saldo;
 
     @Column(nullable = false)
-    private boolean activo;
+    private Boolean activo;
 }
