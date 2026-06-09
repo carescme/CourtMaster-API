@@ -14,6 +14,9 @@ import com.courtmaster.api.repository.PistaRepository;
 
 import lombok.RequiredArgsConstructor;
 import java.util.List;
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +49,7 @@ public class ReservaService {
             throw new IllegalStateException("No se puede reservar: La pista seleccionada está desactivada.");
         }
 
-        List<Reserva> reservasDia = reservaRepository.findByPistaIdAndFecha(pistaDB.getId(), reserva.getFecha());
+        List<Reserva> reservasDia = reservaRepository.findByPistaIdAndFechaAndEstado(pistaDB.getId(), reserva.getFecha(), EstadoReserva.CONFIRMADA);
 
         boolean solapado = reservasDia.stream().anyMatch(existe ->
             reserva.getHoraInicio().isBefore(existe.getHoraFin()) &&
@@ -69,17 +72,33 @@ public class ReservaService {
     }
 
     @Transactional
-    public void cancelarReserva(Long id){
+    public void cancelarReserva(Long id) {
         Reserva reserva = reservaRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("No se puede cancelar: La reserva no existe."));
 
-        if (reserva.getEstado() == EstadoReserva.CANCELADA){
+        if (reserva.getEstado() == EstadoReserva.CANCELADA) {
             throw new IllegalStateException("La reserva ya se encuentra cancelada.");
         }
 
-        Usuario usuario = reserva.getUsuario();
-        usuario.setSaldo(usuario.getSaldo().add(reserva.getPrecioPagado()));
-        usuarioRepository.save(usuario);
+        LocalDateTime momentoPartido = LocalDateTime.of(reserva.getFecha(), reserva.getHoraInicio());
+        LocalDateTime fechaLimiteReembolsoTotal = momentoPartido.minusHours(24);
+        LocalDateTime ahora = LocalDateTime.now();
+
+        BigDecimal importeReembolso = BigDecimal.ZERO;
+
+        if (ahora.isBefore(fechaLimiteReembolsoTotal)) {
+            importeReembolso = reserva.getPrecioPagado();
+            System.out.println("Cancelación a tiempo. Se reembolsa el 100%: " + importeReembolso + "€");
+        } else {
+            importeReembolso = reserva.getPrecioPagado().divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+            System.out.println("Cancelación tardía (menos de 24h). Se reembolsa el 50%: " + importeReembolso + "€");
+        }
+
+        if (importeReembolso.compareTo(BigDecimal.ZERO) > 0) {
+            Usuario usuario = reserva.getUsuario();
+            usuario.setSaldo(usuario.getSaldo().add(importeReembolso));
+            usuarioRepository.save(usuario);
+        }
 
         reserva.setEstado(EstadoReserva.CANCELADA);
         reservaRepository.save(reserva);
