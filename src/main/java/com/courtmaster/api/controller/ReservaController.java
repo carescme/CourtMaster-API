@@ -24,4 +24,9 @@ public class ReservaController {
         return reservaService.obtenerPorUsuario(usuarioId);
     }
     
+    //POST
+    @PostMapping
+    public Reserva crear(@RequestBody Reserva reserva){
+        return reservaService.crearReserva(reserva);
+    }
 }
