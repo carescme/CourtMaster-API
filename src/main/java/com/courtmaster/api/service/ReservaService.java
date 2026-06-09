@@ -67,4 +67,21 @@ public class ReservaService {
         reserva.setEstado(EstadoReserva.CONFIRMADA);
         return reservaRepository.save(reserva);
     }
+
+    @Transactional
+    public void cancelarReserva(Long id){
+        Reserva reserva = reservaRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("No se puede cancelar: La reserva no existe."));
+
+        if (reserva.getEstado() == EstadoReserva.CANCELADA){
+            throw new IllegalStateException("La reserva ya se encuentra cancelada.");
+        }
+
+        Usuario usuario = reserva.getUsuario();
+        usuario.setSaldo(usuario.getSaldo().add(reserva.getPrecioPagado()));
+        usuarioRepository.save(usuario);
+
+        reserva.setEstado(EstadoReserva.CANCELADA);
+        reservaRepository.save(reserva);
+    }
 }

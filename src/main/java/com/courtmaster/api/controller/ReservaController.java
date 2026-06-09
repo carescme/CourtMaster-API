@@ -5,7 +5,6 @@ import com.courtmaster.api.service.ReservaService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequestMapping("/api/reservas")
@@ -28,5 +27,12 @@ public class ReservaController {
     @PostMapping
     public Reserva crear(@RequestBody Reserva reserva){
         return reservaService.crearReserva(reserva);
+    }
+
+    //DELETE
+    @DeleteMapping("/{id}")
+    public String cancelar(@PathVariable Long id){
+        reservaService.cancelarReserva(id);
+        return "Reserva con ID "+id+" cancelada correctamente. Saldo devuelto al usuario.";
     }
 }
