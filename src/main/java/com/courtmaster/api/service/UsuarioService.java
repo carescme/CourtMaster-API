@@ -23,21 +23,19 @@ public class UsuarioService {
 
     @Transactional
     public Usuario crear(Usuario usuario) {
-        if (usuario.getRol() != com.courtmaster.api.model.Rol.GUEST) {
-            if (usuario.getEmail() == null || usuario.getEmail().trim().isEmpty()) {
-                throw new IllegalArgumentException("El email es obligatorio para registrarse.");
-            }
-            
-            if (usuarioRepository.findByEmail(usuario.getEmail()).isPresent()) {
-                throw new IllegalStateException("El email '" + usuario.getEmail().trim() + "' ya está registrado en el sistema.");
-            }
-
-            if (usuario.getPassword() == null || usuario.getPassword().trim().isEmpty()) {
-                throw new IllegalArgumentException("La contraseña no puede estar vacía.");
-            }
-            
-            usuario.setPassword(passwordEncoder.encode(usuario.getPassword().trim()));
+        if (usuario.getEmail() == null || usuario.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("El email es obligatorio para registrarse.");
         }
+        
+        if (usuarioRepository.findByEmail(usuario.getEmail()).isPresent()) {
+            throw new IllegalStateException("El email '" + usuario.getEmail().trim() + "' ya está registrado en el sistema.");
+        }
+
+        if (usuario.getPassword() == null || usuario.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("La contraseña no puede estar vacía.");
+        }
+        
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword().trim()));
 
         if (usuario.getSaldo() == null) {
             usuario.setSaldo(BigDecimal.ZERO);

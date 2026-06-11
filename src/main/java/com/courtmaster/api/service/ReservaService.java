@@ -34,13 +34,15 @@ public class ReservaService {
     }
 
     @Transactional
-    public Reserva crearReserva(Reserva reserva){
-        Usuario usuarioDB = usuarioRepository.findById(reserva.getUsuario().getId())
+    public Reserva crearReserva(Reserva reserva, String email){
+        Usuario usuarioDB = usuarioRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("No se puede reservar: El usuario no existe."));
 
         if (!usuarioDB.getActivo()) {
             throw new IllegalStateException("El usuario está desactivado.");
         }
+
+        reserva.setUsuario(usuarioDB);
         
         Pista pistaDB = pistaRepository.findById(reserva.getPista().getId())
             .orElseThrow(() -> new RuntimeException("No se puede reservar: La pista no existe."));
@@ -49,7 +51,11 @@ public class ReservaService {
             throw new IllegalStateException("No se puede reservar: La pista seleccionada está desactivada.");
         }
 
-        List<Reserva> reservasDia = reservaRepository.findByPistaIdAndFechaAndEstado(pistaDB.getId(), reserva.getFecha(), EstadoReserva.CONFIRMADA);
+        reserva.setPista(pistaDB);
+        Long pistaIdFiltro = pistaDB.getId();
+        java.time.LocalDate fechaFiltro = reserva.getFecha();
+
+        List<Reserva> reservasDia = reservaRepository.findByPistaIdAndFechaAndEstado(pistaIdFiltro, fechaFiltro, EstadoReserva.CONFIRMADA);
 
         boolean solapado = reservasDia.stream().anyMatch(existe ->
             reserva.getHoraInicio().isBefore(existe.getHoraFin()) &&
@@ -60,6 +66,14 @@ public class ReservaService {
             throw new IllegalStateException("La pista ya está ocupada en ese horario.");
         }
         
+        if (reserva.getPrecioPagado() == null) {
+            throw new IllegalArgumentException("Debe especificar el precio pagado de la reserva.");
+        }
+
+        if (usuarioDB.getSaldo() == null) {
+            throw new IllegalStateException("El usuario no tiene un saldo configurado.");
+        }
+
         if (usuarioDB.getSaldo().compareTo(reserva.getPrecioPagado()) < 0){
             throw new IllegalStateException("Saldo insuficiente. La pista cuesta "+reserva.getPrecioPagado()+"€ y tu saldo es de "+usuarioDB.getSaldo()+"€.");
         }

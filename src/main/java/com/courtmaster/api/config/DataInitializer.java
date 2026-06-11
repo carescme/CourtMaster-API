@@ -56,7 +56,7 @@ public class DataInitializer implements CommandLineRunner {
                     .email(null)
                     .telefono("677888999")
                     .password(null)
-                    .rol(Rol.GUEST)
+                    .rol(Rol.USER)
                     .saldo(BigDecimal.ZERO)
                     .activo(true)
                     .build();

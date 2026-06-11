@@ -1,5 +1,7 @@
 package com.courtmaster.api.filter;
 
+import com.courtmaster.api.model.Usuario;
+import com.courtmaster.api.repository.UsuarioRepository;
 import com.courtmaster.api.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -7,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,11 +19,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final UsuarioRepository usuarioRepository;
 
     @Override
     protected void doFilterInternal(
@@ -42,7 +47,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             userEmail = jwtService.extraerUsername(jwt);
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null){
                 if (jwtService.esTokenValido(jwt, userEmail)){
-                    UserDetails userDetails = new User(userEmail, "", Collections.emptyList());
+                    Usuario usuario = usuarioRepository.findByEmail(userEmail)
+                            .orElseThrow(() -> new RuntimeException("Usuario no encontrado en el filtro."));
+
+                    List<SimpleGrantedAuthority> authorities = Collections.singletonList(
+                        new SimpleGrantedAuthority("ROLE_" + usuario.getRol().name())
+                    );
+
+                    UserDetails userDetails = new User(userEmail, "", authorities);
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
