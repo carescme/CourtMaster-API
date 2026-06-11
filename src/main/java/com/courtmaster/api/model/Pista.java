@@ -24,4 +24,8 @@ public class Pista {
 
     @Column(nullable = false)
     private Boolean activa;
+
+    @ManyToOne
+    @JoinColumn(name = "club_id", nullable = false)
+    private Club club;
 }

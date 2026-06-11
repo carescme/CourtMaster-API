@@ -37,4 +37,8 @@ public class Usuario {
 
     @Column(nullable = false)
     private Boolean activo;
+
+    @ManyToOne
+    @JoinColumn(name = "club_id", nullable = true)
+    private Club club;
 }

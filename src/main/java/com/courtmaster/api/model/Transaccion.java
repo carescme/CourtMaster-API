@@ -7,27 +7,23 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transacciones")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter
 public class Transaccion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal monto;
+    @ManyToOne
+    @JoinColumn(name = "pista_id", nullable = true)
+    private Pista pista;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private TipoTransaccion tipo;
+    private TipoTransaccion tipoTransaccion;
 
-    @Column(name = "fecha_creacion", nullable = false)
-    private LocalDateTime fechaCreacion;
+    private BigDecimal monto;
+    private LocalDateTime fecha;
 }
