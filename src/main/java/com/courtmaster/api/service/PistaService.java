@@ -1,6 +1,8 @@
 package com.courtmaster.api.service;
 
+import com.courtmaster.api.model.Club;
 import com.courtmaster.api.model.Pista;
+import com.courtmaster.api.repository.ClubRepository;
 import com.courtmaster.api.repository.PistaRepository;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -12,23 +14,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PistaService {
     private final PistaRepository pistaRepository;
+    private final ClubRepository clubRepository;
 
+    @Transactional(readOnly = true)
     public List<Pista> obtenerTodas(){
         return pistaRepository.findAll();
     }
     
+    @Transactional(readOnly = true)
     public List<Pista> obtenerActivas(){
         return pistaRepository.findByActivaTrue();
     }
 
     @Transactional
     public Pista crearPista(Pista pista){
+        if (pista.getClub() == null || pista.getClub().getId() == null) {
+            throw new IllegalArgumentException("No se puede crear la pista: Debe especificar un Club válido.");
+        }
+        
+        Club clubDB = clubRepository.findById(pista.getClub().getId())
+            .orElseThrow(() -> new RuntimeException("No se puede crear la pista: El Club especificado no existe."));
+
+        pista.setClub(clubDB);
+
         if (pista.getNombre() == null || pista.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre de la pista no puede estar vacío.");
         }
 
         boolean existe = pistaRepository.findAll().stream()
-                .anyMatch(p -> p.getNombre().equalsIgnoreCase(pista.getNombre().trim()));
+            .anyMatch(p -> p.getClub().getId().equals(clubDB.getId()) && 
+                           p.getNombre().equalsIgnoreCase(pista.getNombre().trim()));
+
         if (existe) {
             throw new IllegalStateException("Ya existe una pista con el nombre: " + pista.getNombre().trim());
         }
