@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.courtmaster.api.model.Usuario;
 import com.courtmaster.api.service.UsuarioService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -30,13 +31,13 @@ public class UsuarioController {
 
     // POST
     @PostMapping
-    public Usuario crearUsuario(@RequestBody Usuario usuario) {
+    public Usuario crearUsuario(@Valid @RequestBody Usuario usuario) {
         return usuarioService.crear(usuario);
     }
 
     // PUT
     @PutMapping("/{id}")
-    public Usuario actualizarUsuario(@PathVariable Long id, @RequestBody Usuario usuario) {
+    public Usuario actualizarUsuario(@PathVariable Long id, @Valid @RequestBody Usuario usuario) {
         return usuarioService.actualizar(id, usuario);
     }
 

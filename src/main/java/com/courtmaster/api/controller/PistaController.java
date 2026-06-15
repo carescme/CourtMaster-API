@@ -2,6 +2,8 @@ package com.courtmaster.api.controller;
 
 import com.courtmaster.api.model.Pista;
 import com.courtmaster.api.service.PistaService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,13 +35,13 @@ public class PistaController {
 
     //POST
     @PostMapping
-    public Pista crearPista(@RequestBody Pista pista){
+    public Pista crearPista(@Valid @RequestBody Pista pista){
         return pistaService.crearPista(pista);
     }
 
     //PUT
     @PutMapping("/{id}")
-    public Pista actualizarPista(@PathVariable Long id, @RequestBody Pista pista) {
+    public Pista actualizarPista(@PathVariable Long id, @Valid @RequestBody Pista pista) {
         return pistaService.actualizar(id, pista);
     }
 

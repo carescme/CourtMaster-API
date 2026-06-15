@@ -3,6 +3,8 @@ package com.courtmaster.api.controller;
 import com.courtmaster.api.model.Reserva;
 import com.courtmaster.api.service.ReservaService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +30,7 @@ public class ReservaController {
     
     //POST
     @PostMapping
-    public Reserva crear(@RequestBody Reserva reserva, @AuthenticationPrincipal UserDetails userDetails){
+    public Reserva crear(@Valid @RequestBody Reserva reserva, @AuthenticationPrincipal UserDetails userDetails){
         String email = userDetails.getUsername();
         return reservaService.crearReserva(reserva, email);
     }

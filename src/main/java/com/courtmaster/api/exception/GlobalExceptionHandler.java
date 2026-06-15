@@ -1,9 +1,10 @@
-package com.courtmaster.api.exception; // Asegúrate de que está en tu paquete de excepciones
+package com.courtmaster.api.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -50,5 +51,18 @@ public class GlobalExceptionHandler {
         respuesta.put("error", "Error interno del servidor");
         respuesta.put("mensaje", "Ocurrió un error inesperado: " + ex.getMessage());
         return new ResponseEntity<>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class) 
+        public ResponseEntity<Map<String, Object>> manejarValidacionesCampos(MethodArgumentNotValidException ex) {
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("timestamp", LocalDateTime.now());
+        respuesta.put("status", HttpStatus.BAD_REQUEST.value());
+        respuesta.put("error", "Error de Validación en Campos");
+        
+        String mensajeError = ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
+        respuesta.put("mensaje", mensajeError);
+        
+        return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
     }
 }
