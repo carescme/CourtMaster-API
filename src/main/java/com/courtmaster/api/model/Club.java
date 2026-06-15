@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "clubes")
 @Getter @Setter
@@ -20,5 +22,6 @@ public class Club {
     private String telefono;
 
     @OneToMany(mappedBy = "club", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<Pista> pistas;
 }

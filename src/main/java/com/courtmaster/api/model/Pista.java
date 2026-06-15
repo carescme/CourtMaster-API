@@ -1,5 +1,7 @@
 package com.courtmaster.api.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,5 +29,6 @@ public class Pista {
 
     @ManyToOne
     @JoinColumn(name = "club_id", nullable = false)
+    @JsonBackReference
     private Club club;
 }

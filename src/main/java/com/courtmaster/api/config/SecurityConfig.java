@@ -34,9 +34,10 @@ public class SecurityConfig {
                 //.requestMatchers(HttpMethod.POST, "/api/pistas/**").hasRole("ADMIN")
                 //.requestMatchers(HttpMethod.DELETE, "/api/pistas/**").hasRole("ADMIN")
                 .requestMatchers("/api/**").permitAll()
+                .requestMatchers("/erros").permitAll()
                 .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            );
+            //.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

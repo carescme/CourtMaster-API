@@ -1,5 +1,6 @@
 package com.courtmaster.api.controller;
 
+import com.courtmaster.api.dto.ClubDTO;
 import com.courtmaster.api.model.Club;
 import com.courtmaster.api.service.ClubService;
 import org.springframework.http.HttpStatus;
@@ -19,12 +20,20 @@ public class ClubController {
     }
 
     @PostMapping
-    public ResponseEntity<Club> crear(@RequestBody Club club) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(clubService.crearClub(club));
+    public ResponseEntity<ClubDTO> crearClub(@RequestBody Club club) {
+        ClubDTO clubCreado = clubService.crearClub(club);
+        return ResponseEntity.status(HttpStatus.CREATED).body(clubCreado);
     }
 
     @GetMapping
-    public ResponseEntity<List<Club>> listar() {
-        return ResponseEntity.ok(clubService.listarTodos());
+    public ResponseEntity<List<ClubDTO>> listarTodos() {
+        List<ClubDTO> clubes = clubService.listarTodos();
+        return ResponseEntity.ok(clubes);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ClubDTO> actualizarClub(@PathVariable Long id, @RequestBody Club clubDatosNuevos) {
+        ClubDTO clubActualizado = clubService.actualizarClub(id, clubDatosNuevos);
+        return ResponseEntity.ok(clubActualizado);
     }
 }
