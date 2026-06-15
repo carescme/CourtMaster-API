@@ -1,9 +1,12 @@
 package com.courtmaster.api.service;
 
+import com.courtmaster.api.exception.BadRequestException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +41,7 @@ public class JwtService {
 
     public boolean esTokenValido(String token, String username){
         final String tokenUsername = extraerUsername(token);
-        return (tokenUsername.equals(tokenUsername) && !esTokenExpirado(token));
+        return (tokenUsername.equals(username) && !esTokenExpirado(token));
     }
 
     private boolean esTokenExpirado(String token){
@@ -46,11 +49,20 @@ public class JwtService {
     }
 
     public <T> T extraerClaim(String token, Function<Claims, T> claimsResolver){
-        final Claims claims = Jwts.parserBuilder()
-            .setSigningKey(getSigningKey())
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
-        return claimsResolver.apply(claims);
+        try {
+            final Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+            return claimsResolver.apply(claims);
+            
+        } catch (ExpiredJwtException ex) {
+            throw new BadRequestException("El token JWT ha expirado.");
+        } catch (SignatureException ex) {
+            throw new BadRequestException("Firma del token inválida o manipulada.");
+        } catch (Exception ex) {
+            throw new BadRequestException("Token JWT inválido o mal estructurado.");
+        }
     }
 }

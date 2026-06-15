@@ -2,6 +2,8 @@ package com.courtmaster.api.service;
 
 import com.courtmaster.api.model.Usuario;
 import com.courtmaster.api.repository.UsuarioRepository;
+import com.courtmaster.api.exception.BadRequestException;
+import com.courtmaster.api.exception.ResourceNotFoundException;
 
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional(readOnly = true)
     public List<Usuario> obtenerTodos(){
         return usuarioRepository.findAll();
     }
@@ -24,17 +27,19 @@ public class UsuarioService {
     @Transactional
     public Usuario crear(Usuario usuario) {
         if (usuario.getEmail() == null || usuario.getEmail().trim().isEmpty()) {
-            throw new IllegalArgumentException("El email es obligatorio para registrarse.");
+            throw new BadRequestException("El email es obligatorio para registrarse.");
         }
         
-        if (usuarioRepository.findByEmail(usuario.getEmail()).isPresent()) {
-            throw new IllegalStateException("El email '" + usuario.getEmail().trim() + "' ya está registrado en el sistema.");
+        String emailLimpio = usuario.getEmail().trim();
+        if (usuarioRepository.findByEmail(emailLimpio).isPresent()) {
+            throw new BadRequestException("El email '" + emailLimpio + "' ya está registrado en el sistema.");
         }
 
         if (usuario.getPassword() == null || usuario.getPassword().trim().isEmpty()) {
-            throw new IllegalArgumentException("La contraseña no puede estar vacía.");
+            throw new BadRequestException("La contraseña no puede estar vacía.");
         }
         
+        usuario.setEmail(emailLimpio);
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword().trim()));
 
         if (usuario.getSaldo() == null) {
@@ -50,11 +55,16 @@ public class UsuarioService {
     public Usuario actualizar(Long id, Usuario datos) {
         return usuarioRepository.findById(id)
                 .map(usuario -> {
-                    if (datos.getEmail() != null && !datos.getEmail().equalsIgnoreCase(usuario.getEmail())) {
-                        if (usuarioRepository.findByEmail(datos.getEmail()).isPresent()) {
-                            throw new IllegalStateException("No se puede actualizar: El email '" + datos.getEmail().trim() + "' ya está en uso.");
+                    // Validar duplicados si se intenta cambiar el email
+                    if (datos.getEmail() != null && !datos.getEmail().trim().isEmpty()) {
+                        String nuevoEmail = datos.getEmail().trim();
+                        
+                        if (!nuevoEmail.equalsIgnoreCase(usuario.getEmail())) {
+                            if (usuarioRepository.findByEmail(nuevoEmail).isPresent()) {
+                                throw new BadRequestException("No se puede actualizar: El email '" + nuevoEmail + "' ya está en uso.");
+                            }
+                            usuario.setEmail(nuevoEmail);
                         }
-                        usuario.setEmail(datos.getEmail().trim());
                     }
 
                     if (datos.getNombre() != null && !datos.getNombre().trim().isEmpty()){
@@ -71,13 +81,13 @@ public class UsuarioService {
 
                     return usuarioRepository.save(usuario);
                 })
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
     }
 
     @Transactional
     public void desactivar(Long id) {
         Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("No se puede desactivar. Usuario no encontrado con ID: " + id));
         usuario.setActivo(false);
         usuarioRepository.save(usuario);
     }

@@ -4,7 +4,9 @@ import com.courtmaster.api.model.Club;
 import com.courtmaster.api.model.Pista;
 import com.courtmaster.api.repository.ClubRepository;
 import com.courtmaster.api.repository.PistaRepository;
-
+import com.courtmaster.api.exception.BadRequestException;
+import com.courtmaster.api.exception.ConflictException;
+import com.courtmaster.api.exception.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,16 +31,16 @@ public class PistaService {
     @Transactional
     public Pista crearPista(Pista pista){
         if (pista.getClub() == null || pista.getClub().getId() == null) {
-            throw new IllegalArgumentException("No se puede crear la pista: Debe especificar un Club válido.");
+            throw new BadRequestException("No se puede crear la pista: Debe especificar un Club válido.");
         }
         
         Club clubDB = clubRepository.findById(pista.getClub().getId())
-            .orElseThrow(() -> new RuntimeException("No se puede crear la pista: El Club especificado no existe."));
+            .orElseThrow(() -> new ResourceNotFoundException("No se puede crear la pista: El Club especificado no existe."));
 
         pista.setClub(clubDB);
 
         if (pista.getNombre() == null || pista.getNombre().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre de la pista no puede estar vacío.");
+            throw new BadRequestException("El nombre de la pista no puede estar vacío.");
         }
 
         boolean existe = pistaRepository.findAll().stream()
@@ -46,7 +48,7 @@ public class PistaService {
                            p.getNombre().equalsIgnoreCase(pista.getNombre().trim()));
 
         if (existe) {
-            throw new IllegalStateException("Ya existe una pista con el nombre: " + pista.getNombre().trim());
+            throw new ConflictException("Ya existe una pista con el nombre: " + pista.getNombre().trim() + " en este club.");
         }
 
         pista.setNombre(pista.getNombre().trim());
@@ -56,33 +58,34 @@ public class PistaService {
 
     @Transactional
     public Pista actualizar(Long id, Pista datosActualizados){
-        return pistaRepository.findById(id)
-            .map(pista -> {
-                if (datosActualizados.getNombre() != null && !datosActualizados.getNombre().trim().isEmpty()) {
-                    String nuevoNombre = datosActualizados.getNombre().trim();
-                    
-                    if (!nuevoNombre.equalsIgnoreCase(pista.getNombre())) {
-                        boolean existe = pistaRepository.findAll().stream()
-                                .anyMatch(p -> p.getNombre().equalsIgnoreCase(nuevoNombre));
-                        if (existe) {
-                            throw new IllegalStateException("No se puede actualizar: Ya existe otra pista llamada " + nuevoNombre);
-                        }
-                    }
-                    pista.setNombre(nuevoNombre);
-                }
+        Pista pista = pistaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pista no encontrada con id: " + id));
 
-                if (datosActualizados.getTipo() != null) {
-                    pista.setTipo(datosActualizados.getTipo());
+        if (datosActualizados.getNombre() != null && !datosActualizados.getNombre().trim().isEmpty()) {
+            String nuevoNombre = datosActualizados.getNombre().trim();
+            
+            if (!nuevoNombre.equalsIgnoreCase(pista.getNombre())) {
+                boolean existe = pistaRepository.findAll().stream()
+                        .anyMatch(p -> p.getClub().getId().equals(pista.getClub().getId()) && 
+                                       p.getNombre().equalsIgnoreCase(nuevoNombre));
+                if (existe) {
+                    throw new ConflictException("Ya existe otra pista con el nombre: " + nuevoNombre + " en este club.");
                 }
-                return pistaRepository.save(pista);
-            })
-            .orElseThrow(() -> new RuntimeException("Pista no encontrada con id: "+id));
+            }
+            pista.setNombre(nuevoNombre);
+        }
+
+        if (datosActualizados.getTipo() != null) {
+            pista.setTipo(datosActualizados.getTipo());
+        }
+        
+        return pistaRepository.save(pista);
     }
 
     @Transactional
     public void desactivar(Long id){
         Pista pista = pistaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pista no encontrada con id: "+id));
+                .orElseThrow(() -> new ResourceNotFoundException("No se puede desactivar. Pista no encontrada con id: " + id));
         pista.setActiva(false);
         pistaRepository.save(pista);
     }
