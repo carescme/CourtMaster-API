@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "transacciones")
 @Getter @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Transaccion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

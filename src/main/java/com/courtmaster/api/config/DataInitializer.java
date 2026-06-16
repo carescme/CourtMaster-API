@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import com.courtmaster.api.service.TransaccionService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -20,6 +21,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ClubRepository clubRepository;
     private final ReservaRepository reservaRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TransaccionService transaccionService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -148,9 +150,17 @@ public class DataInitializer implements CommandLineRunner {
                     .precioPagado(new BigDecimal("20.00"))
                     .usuario(userCarlos)
                     .pista(pistaS1)
+                    .estado(EstadoReserva.CONFIRMADA)
                     .build();
             reservaRepository.save(reservaEjemplo);
 
+            transaccionService.registrarTransaccion(
+                userCarlos, 
+                pistaS1, 
+                new BigDecimal("20.00"), 
+                TipoTransaccion.RESERVA
+            );
+            
             System.out.println("Base de Datos: Inicialización completa [ADMIN, OWNER, USER] con contraseñas encriptadas y relaciones perfectas.");
         }
     }

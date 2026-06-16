@@ -1,9 +1,6 @@
 package com.courtmaster.api.service;
 
-import com.courtmaster.api.model.EstadoReserva;
-import com.courtmaster.api.model.Pista;
-import com.courtmaster.api.model.Reserva;
-import com.courtmaster.api.model.Usuario;
+import com.courtmaster.api.model.*;
 import com.courtmaster.api.repository.ReservaRepository;
 import com.courtmaster.api.repository.UsuarioRepository;
 import com.courtmaster.api.repository.PistaRepository;
@@ -26,6 +23,7 @@ public class ReservaService {
     private final ReservaRepository reservaRepository;
     private final UsuarioRepository usuarioRepository;
     private final PistaRepository pistaRepository;
+    private final TransaccionService transaccionService;
 
     @Transactional(readOnly = true)
     public List<Reserva> obtenerTodas(){
@@ -34,7 +32,6 @@ public class ReservaService {
 
     @Transactional(readOnly = true)
     public List<Reserva> obtenerPorUsuario(Long usuarioId){
-        // Validación preventiva: verificar si el usuario existe antes de buscar sus reservas
         if (!usuarioRepository.existsById(usuarioId)) {
             throw new ResourceNotFoundException("El usuario con ID " + usuarioId + " no existe.");
         }
@@ -106,7 +103,16 @@ public class ReservaService {
         usuarioRepository.save(usuarioDB);
 
         reserva.setEstado(EstadoReserva.CONFIRMADA);
-        return reservaRepository.save(reserva);
+        Reserva reservaGuardada = reservaRepository.save(reserva);
+
+        transaccionService.registrarTransaccion(
+            usuarioDB, 
+            pistaDB, 
+            reserva.getPrecioPagado(), 
+            TipoTransaccion.RESERVA
+        );
+
+        return reservaGuardada;
     }
 
     @Transactional
@@ -123,15 +129,20 @@ public class ReservaService {
         LocalDateTime ahora = LocalDateTime.now();
 
         BigDecimal importeReembolso = BigDecimal.ZERO;
+        TipoTransaccion tipoCancelacion; // Para decidir qué Enum usar en base a tu lógica fina
 
         if (ahora.isBefore(fechaLimiteReembolsoTotal)) {
+            // Reembolso completo
             importeReembolso = reserva.getPrecioPagado();
+            tipoCancelacion = TipoTransaccion.CANCELACION_TEMPRANA;
         } else {
+            // Penalización: Reembolso de la mitad
             importeReembolso = reserva.getPrecioPagado().divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+            tipoCancelacion = TipoTransaccion.CANCELACION_TARDIA;
         }
 
+        Usuario usuario = reserva.getUsuario();
         if (importeReembolso.compareTo(BigDecimal.ZERO) > 0) {
-            Usuario usuario = reserva.getUsuario();
             if (usuario.getSaldo() != null) {
                 usuario.setSaldo(usuario.getSaldo().add(importeReembolso));
                 usuarioRepository.save(usuario);
@@ -140,5 +151,12 @@ public class ReservaService {
 
         reserva.setEstado(EstadoReserva.CANCELADA);
         reservaRepository.save(reserva);
+
+        transaccionService.registrarTransaccion(
+            usuario, 
+            reserva.getPista(), 
+            importeReembolso, 
+            tipoCancelacion
+        );
     }
 }
