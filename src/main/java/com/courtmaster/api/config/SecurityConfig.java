@@ -30,14 +30,26 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                //.requestMatchers("/api/auth/**").permitAll()
-                //.requestMatchers(HttpMethod.POST, "/api/pistas/**").hasRole("ADMIN")
-                //.requestMatchers(HttpMethod.DELETE, "/api/pistas/**").hasRole("ADMIN")
-                .requestMatchers("/api/**").permitAll()
-                .requestMatchers("/erros").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/").permitAll()
+                .requestMatchers("/error").permitAll()
+
+                .requestMatchers(HttpMethod.GET, "/api/pistas/**").hasAnyRole("USER", "OWNER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/pistas/**").hasAnyRole("ADMIN", "OWNER")
+                .requestMatchers(HttpMethod.PUT, "/api/pistas/**").hasAnyRole("ADMIN", "OWNER")
+                .requestMatchers(HttpMethod.DELETE, "/api/pistas/**").hasAnyRole("ADMIN", "OWNER")
+
+                .requestMatchers(HttpMethod.GET, "/api/clubes/**").hasAnyRole("USER", "OWNER", "ADMIN")
+                .requestMatchers("/api/clubes/**").hasRole("ADMIN")
+
+                .requestMatchers("/api/reservas/**").hasAnyRole("USER", "OWNER", "ADMIN")
+
+                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+
                 .anyRequest().authenticated()
-            );
-            //.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

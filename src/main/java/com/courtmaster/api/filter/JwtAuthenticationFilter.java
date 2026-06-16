@@ -64,16 +64,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         return;
                     }
 
-                    List<SimpleGrantedAuthority> authorities = Collections.singletonList(
-                        new SimpleGrantedAuthority("ROLE_" + usuario.getRol().name())
-                    );
-
-                    UserDetails userDetails = new User(userEmail, "", authorities);
-
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
+                        usuario, 
                         null,
-                        userDetails.getAuthorities()
+                        usuario.getAuthorities()
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
