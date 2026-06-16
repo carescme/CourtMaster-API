@@ -2,11 +2,14 @@ package com.courtmaster.api.service;
 
 import com.courtmaster.api.model.Club;
 import com.courtmaster.api.model.Pista;
+import com.courtmaster.api.model.Rol;
+import com.courtmaster.api.model.Usuario;
 import com.courtmaster.api.repository.ClubRepository;
 import com.courtmaster.api.repository.PistaRepository;
 import com.courtmaster.api.exception.BadRequestException;
 import com.courtmaster.api.exception.ConflictException;
 import com.courtmaster.api.exception.ResourceNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -83,9 +86,16 @@ public class PistaService {
     }
 
     @Transactional
-    public void desactivar(Long id){
+    public void desactivar(Long id, Usuario usuarioLogueado) {
         Pista pista = pistaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No se puede desactivar. Pista no encontrada con id: " + id));
+
+        if (usuarioLogueado.getRol() == Rol.OWNER) {
+            if (usuarioLogueado.getClub() == null || !pista.getClub().getId().equals(usuarioLogueado.getClub().getId())) {
+                throw new AccessDeniedException("Operación denegada: No tienes permisos para gestionar pistas de otros clubes.");
+            }
+        }
+
         pista.setActiva(false);
         pistaRepository.save(pista);
     }

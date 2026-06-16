@@ -1,6 +1,7 @@
 package com.courtmaster.api.controller;
 
 import com.courtmaster.api.model.Pista;
+import com.courtmaster.api.model.Usuario;
 import com.courtmaster.api.service.PistaService;
 
 import jakarta.validation.Valid;
@@ -8,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,7 +50,8 @@ public class PistaController {
 
     //DELETE
     @DeleteMapping("/{id}")
-    public void desactivar(@PathVariable Long id){
-        pistaService.desactivar(id);
+    public ResponseEntity<String> desactivar(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogueado) {
+        pistaService.desactivar(id, usuarioLogueado);
+        return ResponseEntity.ok("La pista ha sido desactivada del sistema correctamente.");
     }
 }

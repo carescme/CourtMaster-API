@@ -5,6 +5,9 @@ import com.courtmaster.api.model.Usuario;
 import com.courtmaster.api.service.TransaccionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import com.courtmaster.api.dto.RecargaRequest;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 public class TransaccionController {
 
     private final TransaccionService transaccionService;
+    //GET
 
     @GetMapping("/mi-historial")
     public ResponseEntity<List<TransaccionResponse>> obtenerMiHistorial(@AuthenticationPrincipal Usuario usuarioLogueado) {
@@ -36,5 +40,13 @@ public class TransaccionController {
                 ).collect(Collectors.toList());
 
         return ResponseEntity.ok(historialDTO);
+    }
+
+    //POST
+
+    @PostMapping("/recargar")
+    public ResponseEntity<String> recargar(@AuthenticationPrincipal Usuario usuarioLogueado, @RequestBody RecargaRequest request) {
+        transaccionService.recargarMonedero(usuarioLogueado.getId(), request.getMonto());
+        return ResponseEntity.ok("Recarga de " + request.getMonto() + "€ realizada con éxito.");
     }
 }
