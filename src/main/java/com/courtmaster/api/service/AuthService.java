@@ -2,9 +2,17 @@ package com.courtmaster.api.service;
 
 import com.courtmaster.api.dto.LoginRequest;
 import com.courtmaster.api.dto.AuthResponse;
+import com.courtmaster.api.dto.RegistroRequest;
+import com.courtmaster.api.model.Rol;
 import com.courtmaster.api.model.Usuario;
 import com.courtmaster.api.repository.UsuarioRepository;
-import com.courtmaster.api.exception.BadRequestException; // Usamos tu excepción de lógica errónea
+
+import jakarta.transaction.Transactional;
+
+import com.courtmaster.api.exception.BadRequestException;
+import com.courtmaster.api.exception.ConflictException;
+
+import java.math.BigDecimal;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,5 +40,26 @@ public class AuthService {
 
         String token = jwtService.generarToken(usuario.getEmail());
         return new AuthResponse(token);
+    }
+
+    @Transactional
+    public Usuario registrarUsuarioPublico(RegistroRequest dto) {
+        if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new ConflictException("El email " + dto.getEmail() + " ya está registrado en el sistema.");
+        }
+
+        Usuario nuevoUsuario = new Usuario();
+        nuevoUsuario.setNombre(dto.getNombre());
+        nuevoUsuario.setEmail(dto.getEmail());
+        nuevoUsuario.setTelefono(dto.getTelefono());
+        
+        nuevoUsuario.setPassword(passwordEncoder.encode(dto.getPassword()));
+        
+        nuevoUsuario.setRol(Rol.USER);
+        
+        nuevoUsuario.setSaldo(new BigDecimal("5.00")); 
+        nuevoUsuario.setActivo(true);
+
+        return usuarioRepository.save(nuevoUsuario);
     }
 }

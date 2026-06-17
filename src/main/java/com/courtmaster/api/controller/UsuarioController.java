@@ -1,16 +1,14 @@
 package com.courtmaster.api.controller;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import com.courtmaster.api.dto.UsuarioResponse; 
 import com.courtmaster.api.model.Usuario;
 import com.courtmaster.api.service.UsuarioService;
 
@@ -21,30 +19,48 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
 public class UsuarioController {
+
     private final UsuarioService usuarioService;
 
-    //GET
     @GetMapping
-    public List<Usuario> listaUsuarios(){
-        return usuarioService.obtenerTodos();
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<UsuarioResponse>> obtenerUsuarios(@PageableDefault(size = 10) Pageable pageable) {
+        Page<UsuarioResponse> usuarios = usuarioService.listarTodosLosUsuarios(pageable);
+        return ResponseEntity.ok(usuarios);
     }
 
-    // POST
-    @PostMapping
-    public Usuario crearUsuario(@Valid @RequestBody Usuario usuario) {
-        return usuarioService.crear(usuario);
+    @PatchMapping("/{id}/ascender")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> ascenderAOwner(@PathVariable Long id) {
+        usuarioService.cambiarRolAOwner(id);
+        return ResponseEntity.ok("El usuario con ID " + id + " ha sido ascendido a OWNER con éxito.");
     }
 
-    // PUT
+    @GetMapping("/perfil")
+    public ResponseEntity<UsuarioResponse> verMiPerfil(@AuthenticationPrincipal Usuario usuarioLogueado) {
+        UsuarioResponse perfil = UsuarioResponse.builder()
+                .id(usuarioLogueado.getId())
+                .nombre(usuarioLogueado.getNombre())
+                .email(usuarioLogueado.getEmail())
+                .telefono(usuarioLogueado.getTelefono())
+                .rol(usuarioLogueado.getRol())
+                .saldo(usuarioLogueado.getSaldo())
+                .activo(usuarioLogueado.getActivo())
+                .clubId(usuarioLogueado.getClub() != null ? usuarioLogueado.getClub().getId() : null)
+                .build();
+        return ResponseEntity.ok(perfil);
+    }
+
     @PutMapping("/{id}")
-    public Usuario actualizarUsuario(@PathVariable Long id, @Valid @RequestBody Usuario usuario) {
-        return usuarioService.actualizar(id, usuario);
+    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Long id, @Valid @RequestBody Usuario usuario) {
+        Usuario actualizado = usuarioService.actualizar(id, usuario);
+        return ResponseEntity.ok(actualizado);
     }
 
-    // DELETE
     @DeleteMapping("/{id}")
-    public String desactivarUsuario(@PathVariable Long id) {
+    @PreAuthorize("hasRole('ADMIN')") 
+    public ResponseEntity<String> desactivarUsuario(@PathVariable Long id) {
         usuarioService.desactivar(id);
-        return "Usuario con ID " + id + " desactivado correctamente.";
+        return ResponseEntity.ok("Usuario con ID " + id + " desactivado correctamente.");
     }
 }

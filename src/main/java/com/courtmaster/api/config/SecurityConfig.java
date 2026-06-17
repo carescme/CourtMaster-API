@@ -30,7 +30,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/registro").permitAll()
                 .requestMatchers(HttpMethod.GET, "/").permitAll()
                 .requestMatchers("/error").permitAll()
 
@@ -46,6 +46,7 @@ public class SecurityConfig {
 
                 .requestMatchers("/api/transacciones/**").hasAnyRole("USER", "OWNER", "ADMIN")
 
+                .requestMatchers("/api/usuarios/perfil").authenticated()
                 .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()

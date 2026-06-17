@@ -1,5 +1,7 @@
 package com.courtmaster.api.service;
 
+import com.courtmaster.api.model.Rol;
+import com.courtmaster.api.dto.UsuarioResponse;
 import com.courtmaster.api.model.Usuario;
 import com.courtmaster.api.repository.UsuarioRepository;
 import com.courtmaster.api.exception.BadRequestException;
@@ -8,6 +10,8 @@ import com.courtmaster.api.exception.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
@@ -20,8 +24,19 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public List<Usuario> obtenerTodos(){
-        return usuarioRepository.findAll();
+    public Page<UsuarioResponse> listarTodosLosUsuarios(Pageable pageable) {
+        return usuarioRepository.findAll(pageable)
+                .map(u -> UsuarioResponse.builder()
+                        .id(u.getId())
+                        .nombre(u.getNombre())
+                        .email(u.getEmail())
+                        .telefono(u.getTelefono())
+                        .rol(u.getRol())
+                        .saldo(u.getSaldo())
+                        .activo(u.getActivo())
+                        .clubId(u.getClub() != null ? u.getClub().getId() : null)
+                        .build()
+                );
     }
 
     @Transactional
@@ -89,6 +104,22 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No se puede desactivar. Usuario no encontrado con ID: " + id));
         usuario.setActivo(false);
+        usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public void cambiarRolAOwner(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + usuarioId));
+
+        if (usuario.getRol() == Rol.OWNER) {
+            throw new BadRequestException("El usuario ya tiene el rol de OWNER.");
+        }
+        if (usuario.getRol() == Rol.ADMIN) {
+            throw new BadRequestException("No se puede degradar o cambiar el rol de un ADMINISTRADOR global.");
+        }
+
+        usuario.setRol(Rol.OWNER);
         usuarioRepository.save(usuario);
     }
 }
