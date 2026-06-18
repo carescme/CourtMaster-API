@@ -1,10 +1,13 @@
 package com.courtmaster.api.controller;
 
+import com.courtmaster.api.dto.DashboardReserva;
 import com.courtmaster.api.model.Reserva;
 import com.courtmaster.api.service.ReservaService;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -30,9 +33,27 @@ public class ReservaController {
     
     //POST
     @PostMapping
-    public Reserva crear(@Valid @RequestBody Reserva reserva, @AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<DashboardReserva> crear(
+            @Valid @RequestBody Reserva reserva, 
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
         String email = userDetails.getUsername();
-        return reservaService.crearReserva(reserva, email);
+        Reserva nuevaReserva = reservaService.crearReserva(reserva, email);
+        
+        DashboardReserva dto = DashboardReserva.builder()
+                .id(nuevaReserva.getId())
+                .usuarioEmail(nuevaReserva.getUsuario().getEmail())
+                .usuarioTelefono(nuevaReserva.getUsuario().getTelefono())
+                .pistaId(nuevaReserva.getPista().getId())
+                .pistaNombre(nuevaReserva.getPista().getNombre())
+                .fecha(nuevaReserva.getFecha())
+                .horaInicio(nuevaReserva.getHoraInicio())
+                .horaFin(nuevaReserva.getHoraFin())
+                .precioPagado(nuevaReserva.getPrecioPagado())
+                .estado(nuevaReserva.getEstado().name())
+                .build();
+
+        return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
     //DELETE

@@ -10,4 +10,7 @@ import java.util.List;
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
     List<Reserva> findByUsuarioId(Long usuarioId);
     List<Reserva> findByPistaIdAndFechaAndEstado(Long pistaId, LocalDate fecha, EstadoReserva estado);
+
+    List<Reserva> findByPistaClubId(Long clubId);
+    List<Reserva> findByPistaClubIdAndEstado(Long clubId, EstadoReserva estado);
 }

@@ -129,14 +129,12 @@ public class ReservaService {
         LocalDateTime ahora = LocalDateTime.now();
 
         BigDecimal importeReembolso = BigDecimal.ZERO;
-        TipoTransaccion tipoCancelacion; // Para decidir qué Enum usar en base a tu lógica fina
+        TipoTransaccion tipoCancelacion; 
 
         if (ahora.isBefore(fechaLimiteReembolsoTotal)) {
-            // Reembolso completo
             importeReembolso = reserva.getPrecioPagado();
             tipoCancelacion = TipoTransaccion.CANCELACION_TEMPRANA;
         } else {
-            // Penalización: Reembolso de la mitad
             importeReembolso = reserva.getPrecioPagado().divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
             tipoCancelacion = TipoTransaccion.CANCELACION_TARDIA;
         }
