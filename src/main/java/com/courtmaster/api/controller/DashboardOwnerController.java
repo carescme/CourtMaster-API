@@ -1,6 +1,5 @@
 package com.courtmaster.api.controller;
 
-import com.courtmaster.api.model.Reserva;
 import com.courtmaster.api.model.Usuario;
 import com.courtmaster.api.service.DashboardOwner;
 import com.courtmaster.api.dto.DashboardReserva;

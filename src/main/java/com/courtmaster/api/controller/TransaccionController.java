@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 public class TransaccionController {
 
     private final TransaccionService transaccionService;
+    
     //GET
-
     @GetMapping("/mi-historial")
     public ResponseEntity<List<TransaccionResponse>> obtenerMiHistorial(@AuthenticationPrincipal Usuario usuarioLogueado) {
         List<TransaccionResponse> historialDTO = transaccionService.obtenerHistorialUsuario(usuarioLogueado.getId())

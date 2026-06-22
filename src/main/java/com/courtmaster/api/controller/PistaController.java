@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,18 +39,21 @@ public class PistaController {
 
     //POST
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     public Pista crearPista(@Valid @RequestBody Pista pista){
         return pistaService.crearPista(pista);
     }
 
     //PUT
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     public Pista actualizarPista(@PathVariable Long id, @Valid @RequestBody Pista pista) {
         return pistaService.actualizar(id, pista);
     }
 
     //DELETE
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     public ResponseEntity<String> desactivar(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogueado) {
         pistaService.desactivar(id, usuarioLogueado);
         return ResponseEntity.ok("La pista ha sido desactivada del sistema correctamente.");
